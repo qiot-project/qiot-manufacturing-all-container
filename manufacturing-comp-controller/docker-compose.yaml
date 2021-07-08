@@ -1,0 +1,77 @@
+version: '3'
+services:
+
+#  mosquitto:
+#    image: eclipse-mosquitto
+#    container_name: "manufacturing-factory-mosquitto"
+#    restart: "always"
+#    networks:
+#      - manufacturing-factory
+#      - manufacturing-factoryconnect
+#    ports:
+#    - "1883:1883"
+#    - "9001:9001"
+
+  activemq:
+    image: vromero/activemq-artemis:latest-alpine
+    container_name: "manufacturing-factory-broker"
+    restart: "always"
+    networks:
+      - manufacturing-factory
+      - manufacturing-factoryconnect
+    ports:
+    - "61616:61616"
+    - "1883:1883"
+    - "5672:5672"
+    - "8161:8161"
+    environment:
+      ARTEMIS_USERNAME: "qiotmanufacturing"
+      ARTEMIS_PASSWORD: "qiotmanufacturingpassword"
+
+  kafka:
+    image: obsidiandynamics/kafka
+    container_name: "manufacturing-factory-kafka"
+    restart: "always"
+    networks:
+      - manufacturing-factory
+      - manufacturing-datacenterconnect
+    ports:
+      - "2181:2181"
+      - "9092:9092"
+    environment:
+      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://manufacturing-factory-kafka:29092,EXTERNAL://manufacturing-factory-kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT: "6000"
+      KAFKA_RESTART_ATTEMPTS: "10"
+      KAFKA_RESTART_DELAY: "5"
+      ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: "0"
+
+  postgresql:
+    image: postgres
+    container_name: "manufacturing-factory-postgresql"
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-storage:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "qiot"
+      POSTGRES_PASSWORD: "qiot"
+      POSTGRES_DB: "qiot"
+      
+volumes:
+  postgres-storage:
+networks:
+  manufacturing-datacenterconnect:
+    external: true
+  manufacturing-factory:
+    external: true
+  manufacturing-factoryconnect:
+    external: true
+  default:
+    external:
+      name: manufacturing-factory
+
+
