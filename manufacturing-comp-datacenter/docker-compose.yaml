@@ -1,6 +1,22 @@
 version: '3'
 services:
 
+  activemq:
+    image: vromero/activemq-artemis:latest-alpine
+    container_name: "manufacturing-factory-broker"
+    restart: "always"
+    networks:
+      - manufacturing-factory
+      - manufacturing-factoryconnect
+    ports:
+    - "61617:61616"
+    - "1884:1883"
+    - "5673:5672"
+    - "8162:8161"
+    environment:
+      ARTEMIS_USERNAME: "qiotmanufacturing"
+      ARTEMIS_PASSWORD: "qiotmanufacturingpassword"
+
   kafka:
     image: obsidiandynamics/kafka
     container_name: "manufacturing-datacenter-kafka"
@@ -30,9 +46,9 @@ services:
     volumes:
       - postgres-storage:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: "qiot"
-      POSTGRES_PASSWORD: "qiot"
-      POSTGRES_DB: "qiot"
+      POSTGRES_USER: "qiotmanufacturing"
+      POSTGRES_PASSWORD: "qiotmanufacturingpassword"
+      POSTGRES_DB: "qiot_manufacturing"
       
   influxdb:
     image: "influxdb:latest"
