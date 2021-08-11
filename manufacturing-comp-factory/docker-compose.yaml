@@ -1,17 +1,6 @@
 version: '3'
 services:
 
-#  mosquitto:
-#    image: eclipse-mosquitto
-#    container_name: "manufacturing-factory-mosquitto"
-#    restart: "always"
-#    networks:
-#      - manufacturing-factory
-#      - manufacturing-factoryconnect
-#    ports:
-#    - "1883:1883"
-#    - "9001:9001"
-
   activemq:
     image: vromero/activemq-artemis:latest-alpine
     container_name: "manufacturing-factory-broker"
@@ -28,25 +17,21 @@ services:
       ARTEMIS_USERNAME: "qiotmanufacturing"
       ARTEMIS_PASSWORD: "qiotmanufacturingpassword"
 
-#  kafka:
-#    image: obsidiandynamics/kafka
-#    container_name: "manufacturing-factory-kafka"
+#  activemq:
+#    image: quay.io/artemiscloud/activemq-artemis-broker:dev.latest
+#    container_name: "manufacturing-factory-broker"
 #    restart: "always"
 #    networks:
 #      - manufacturing-factory
-#      - manufacturing-datacenterconnect
+#      - manufacturing-factoryconnect
 #    ports:
-#      - "2181:2181"
-#      - "9092:9092"
+#    - "61616:61616"
+#    - "1883:1883"
+#    - "5672:5672"
+#    - "8161:8161"
 #    environment:
-#      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:9092"
-#      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://manufacturing-factory-kafka:29092,EXTERNAL://manufacturing-factory-kafka:9092"
-#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
-#      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
-#      KAFKA_ZOOKEEPER_SESSION_TIMEOUT: "6000"
-#      KAFKA_RESTART_ATTEMPTS: "10"
-#      KAFKA_RESTART_DELAY: "5"
-#      ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: "0"
+#      AMQ_USER: "qiotmanufacturing"
+#      AMQ_PASSWORD: "qiotmanufacturingpassword"
 
   postgresql:
     image: postgres
