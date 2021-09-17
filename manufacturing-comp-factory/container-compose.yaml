@@ -1,7 +1,7 @@
 version: '3'
 services:
 
-  activemq:
+  manufacturing-factory-broker:
     image: vromero/activemq-artemis:latest-alpine
     container_name: "manufacturing-factory-broker"
     restart: "always"
@@ -17,26 +17,12 @@ services:
       ARTEMIS_USERNAME: "qiotmanufacturing"
       ARTEMIS_PASSWORD: "qiotmanufacturingpassword"
 
-#  activemq:
-#    image: quay.io/artemiscloud/activemq-artemis-broker:dev.latest
-#    container_name: "manufacturing-factory-broker"
-#    restart: "always"
-#    networks:
-#      - manufacturing-factory
-#      - manufacturing-factoryconnect
-#    ports:
-#    - "61616:61616"
-#    - "1883:1883"
-#    - "5672:5672"
-#    - "8161:8161"
-#    environment:
-#      AMQ_USER: "qiotmanufacturing"
-#      AMQ_PASSWORD: "qiotmanufacturingpassword"
-
-  postgresql:
+  manufacturing-factory-sqlstorage:
     image: postgres
     container_name: "manufacturing-factory-sqlstorage"
     restart: always
+    expose:
+      - "5432"
     ports:
       - "5432:5432"
     volumes:
@@ -46,9 +32,16 @@ services:
       POSTGRES_PASSWORD: "qiotmanufacturingpassword"
       POSTGRES_DB: "qiot_manufacturing"
       
-  mongo:
+  manufacturing-factory-nosqlstorage:
     image: mongo
     container_name: "manufacturing-factory-nosqlstorage"
+    restart: "always"
+    networks:
+      - manufacturing-factory
+    expose:
+      - "27017"
+    ports:
+      - "27017:27017"
     environment:
       MONGO_INITDB_DATABASE: "qiot_manufacturing"
       #MONGO_INITDB_ROOT_USERNAME: "qiotmanufacturing"

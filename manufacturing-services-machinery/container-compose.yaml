@@ -1,0 +1,43 @@
+version: '3'
+services:
+
+  manufacturing-edge-machinery-service:
+    image: quay.io/qiotmanufacturing/edge-machinery:1.0.0-alpha7
+    container_name: "manufacturing-edge-machinery-service"
+    restart: "no"
+    networks:
+      - manufacturing-edge
+      - manufacturing-factoryconnect
+    expose:
+      - "8080"
+    ports:
+      - "5000:8080"
+    volumes:
+      - edge-machinery-storage:/var/data/qiot
+    environment:
+      QUARKUS_PROFILE: "staging"
+#      LOG_LEVEL: "DEBUG"
+      QIOT_LOG_LEVEL: "DEBUG"
+      ENABLE_SSL: "false"
+      INSECURE_HTTP_STATUS: "enabled"
+      MACHINERY_SERIAL: "testmachineryserial02"
+      MACHINERY_NAME: "testmachineryname02"
+      CERT_STORE_PASSWORD: "123456"
+      FACTORY_PRODUCTLINE_SERVICE_URL: "http://manufacturing-factory-productline-service:8080"
+      FACILITY_MANAGER_SERVICE_URL: "http://manufacturing-factory-facility-manager-service:8080"
+      BROKER_URL: "manufacturing-factory-broker:61616"
+#      FACILITY_MANAGER_SERVICE_URL: "https://manufacturing-factory-facility-manager-service:8443"
+#      DO_RESET: "true"
+
+volumes:
+  edge-machinery-storage:
+networks:
+  manufacturing-edge:
+    external: true
+  manufacturing-factoryconnect:
+    external: true
+  default:
+    external:
+      name: manufacturing-factory
+
+
