@@ -2,7 +2,7 @@ version: '3'
 services:
 
   manufacturing-edge-machinery-service:
-    image: quay.io/qiotmanufacturing/edge-machinery:1.0.0-alpha7
+    image: quay.io/qiotmanufacturing/edge-machinery:1.0.0-beta1
     container_name: "manufacturing-edge-machinery-service"
     restart: "no"
     networks:

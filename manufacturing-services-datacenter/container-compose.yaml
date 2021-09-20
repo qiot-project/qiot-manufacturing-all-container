@@ -2,7 +2,7 @@ version: '3'
 services:
 
   manufacturing-datacenter-registration-service:
-    image: quay.io/qiotmanufacturing/datacenter-registration:1.0.0-alpha7
+    image: quay.io/qiotmanufacturing/datacenter-registration:1.0.0-beta1
     container_name: "manufacturing-datacenter-registration-service"
     restart: "always"
     networks:
@@ -17,7 +17,7 @@ services:
       CERT_MANAGER_ENABLED: "false"
 
   manufacturing-datacenter-plant-manager-service:
-    image: quay.io/qiotmanufacturing/datacenter-plant-manager:1.0.0-alpha7
+    image: quay.io/qiotmanufacturing/datacenter-plant-manager:1.0.0-beta1
     container_name: "manufacturing-datacenter-plant-manager-service"
     restart: "no"
     networks:
@@ -31,15 +31,15 @@ services:
       - "5243:8443"
     environment:
       QUARKUS_PROFILE: "staging"
-      LOG_LEVEL: "DEBUG"
-      QIOT_LOG_LEVEL: "DEBUG"
+#      LOG_LEVEL: "DEBUG"
+#      QIOT_LOG_LEVEL: "DEBUG"
       ENABLE_SSL: "false"
       INSECURE_HTTP_STATUS: "enabled"
       DB_URL: "manufacturing-datacenter-sqlstorage:5432"
       REGISTRATION_SERVICE_URL: "http://manufacturing-datacenter-registration-service:8080"
 
   manufacturing-datacenter-productline-service:
-    image: quay.io/qiotmanufacturing/datacenter-product-line:1.0.0-alpha7
+    image: quay.io/qiotmanufacturing/datacenter-product-line:1.0.0-beta1
     container_name: "manufacturing-datacenter-productline-service"
     restart: "no"
     networks:
@@ -60,7 +60,7 @@ services:
       KAFKA_BOOTSTRAP_URL: "manufacturing-datacenter-kafka:9092"
 
   manufacturing-datacenter-eventcollector-service:
-    image: quay.io/qiotmanufacturing/datacenter-event-collector-jvm:1.0.0-alpha7
+    image: quay.io/qiotmanufacturing/datacenter-event-collector-jvm:1.0.0-beta1
     container_name: "manufacturing-datacenter-eventcollector-service"
     restart: "no"
     networks:

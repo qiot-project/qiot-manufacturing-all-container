@@ -2,7 +2,7 @@ version: '3'
 services:
 
   manufacturing-factory-facility-manager-service:
-    image: quay.io/qiotmanufacturing/factory-facility-manager:1.0.0-alpha7
+    image: quay.io/qiotmanufacturing/factory-facility-manager:1.0.0-beta1
     container_name: "manufacturing-factory-facility-manager-service"
     restart: "no"
     networks:
@@ -32,7 +32,7 @@ services:
 #      DO_RESET: "true"
 
   manufacturing-factory-productline-service:
-    image: quay.io/qiotmanufacturing/factory-product-line:1.0.0-alpha7
+    image: quay.io/qiotmanufacturing/factory-product-line:1.0.0-beta1
     container_name: "manufacturing-factory-productline-service"
     restart: "no"
     networks:
@@ -59,7 +59,7 @@ services:
       KAFKA_BOOTSTRAP_URL: "manufacturing-datacenter-kafka:9092"
 
   manufacturing-factory-validator-service:
-    image: quay.io/qiotmanufacturing/factory-production-validator:1.0.0-alpha7
+    image: quay.io/qiotmanufacturing/factory-production-validator:1.0.0-beta1
     container_name: "manufacturing-factory-validator-service"
     restart: "no"
     networks:
@@ -71,7 +71,7 @@ services:
     environment:
       QUARKUS_PROFILE: "staging"
 #      LOG_LEVEL: "DEBUG"
-#      QIOT_LOG_LEVEL: "DEBUG"
+      QIOT_LOG_LEVEL: "DEBUG"
       ENABLE_SSL: "false"
       MONGODB_URL: "mongodb://manufacturing-factory-nosqlstorage:27017"
       MONGODB_DATABASE: "qiot_manufacturing"
