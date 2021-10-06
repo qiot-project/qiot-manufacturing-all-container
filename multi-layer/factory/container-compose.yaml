@@ -38,7 +38,7 @@ services:
       POSTGRES_DB: "qiot_manufacturing"
       
   manufacturing-factory-nosqlstorage:
-    image: docker.io/mongo
+    image: docker.io/mongo:4.4.9
     container_name: "manufacturing-factory-nosqlstorage"
     restart: "always"
     networks:
