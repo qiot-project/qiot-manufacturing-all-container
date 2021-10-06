@@ -2,7 +2,7 @@ version: '3'
 services:
 
   manufacturing-factory-broker:
-    image: docker.io/amusarra/apache-artemis:2.17.0
+    image: docker.io/digisic/digitalbroker
     container_name: "manufacturing-factory-broker"
     restart: "always"
     networks:
@@ -109,7 +109,7 @@ services:
       MONGODB_USER: "qiotmanufacturing"
       MONGODB_PASSWORD: "qiotmanufacturingpassword"
       BROKER_URL: "manufacturing-factory-broker:61616"
-      KAFKA_BOOTSTRAP_URL: "datacenter.local:9092"
+      KAFKA_BOOTSTRAP_URL: "datacenter.local:9093"
 
   manufacturing-factory-validator-service:
     image: quay.io/qiotmanufacturing/factory-production-validator:1.0.0-beta1-aarch64
@@ -131,7 +131,7 @@ services:
       MONGODB_USER: "qiotmanufacturing"
       MONGODB_PASSWORD: "qiotmanufacturingpassword"
       BROKER_URL: "manufacturing-factory-broker:61616"
-      KAFKA_BOOTSTRAP_URL: "datacenter.local:9092"
+      KAFKA_BOOTSTRAP_URL: "datacenter.local:9093"
       FACTORY_PRODUCTLINE_SERVICE_URL: "http://manufacturing-factory-productline-service:8080"
       FACTORY_FACILITY_MANAGER_SERVICE_URL: "http://manufacturing-factory-facility-manager-service:8080"
       
