@@ -1,0 +1,150 @@
+version: '3'
+services:
+
+  manufacturing-factory-broker:
+    image: docker.io/amusarra/apache-artemis:2.17.0
+    container_name: "manufacturing-factory-broker"
+    restart: "always"
+    networks:
+      - demo-manufacturing-factory
+      - demo-manufacturing-factoryconnect
+    expose:
+      - "61616"
+      - "1883"
+      - "5672"
+      - "8161"
+    ports:
+    - "61616:61616"
+    - "1883:1883"
+    - "5672:5672"
+    - "8161:8161"
+    environment:
+      ARTEMIS_USERNAME: "qiotmanufacturing"
+      ARTEMIS_PASSWORD: "qiotmanufacturingpassword"
+
+  manufacturing-factory-sqlstorage:
+    image: docker.io/postgres
+    container_name: "manufacturing-factory-sqlstorage"
+    restart: always
+    networks:
+      - demo-manufacturing-factory
+    expose:
+      - "5432"
+    volumes:
+      - demo-factory-postgres-storage:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "qiotmanufacturing"
+      POSTGRES_PASSWORD: "qiotmanufacturingpassword"
+      POSTGRES_DB: "qiot_manufacturing"
+      
+  manufacturing-factory-nosqlstorage:
+    image: docker.io/mongo
+    container_name: "manufacturing-factory-nosqlstorage"
+    restart: "always"
+    networks:
+      - demo-manufacturing-factory
+    expose:
+      - "27017"
+    volumes:
+      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - demo-factory-mongo-storage:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: "qiot_manufacturing"
+      #MONGO_INITDB_ROOT_USERNAME: "qiotmanufacturing"
+      #MONGO_INITDB_ROOT_PASSWORD: "qiotmanufacturingpassword"
+      MONGO_INITDB_ROOT_USERNAME: "qiotroot"
+      MONGO_INITDB_ROOT_PASSWORD: "qiotrootpassword"
+
+  manufacturing-factory-facility-manager-service:
+    image: quay.io/qiotmanufacturing/factory-facility-manager:1.0.0-beta1-aarch64
+    container_name: "manufacturing-factory-facility-manager-service"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenterconnect
+      - demo-manufacturing-factory
+      - demo-manufacturing-factoryconnect
+    expose:
+      - "8080"
+      - "8443"
+    ports:
+      - "5100:8080"
+      - "5143:8443"
+    volumes:
+      - demo-factory-shared-storage:/var/data/qiot
+    environment:
+      QUARKUS_PROFILE: "staging"
+#      LOG_LEVEL: "DEBUG"
+#      QIOT_LOG_LEVEL: "DEBUG"
+      ENABLE_SSL: "false"
+      INSECURE_HTTP_STATUS: "enabled"
+      DB_URL: "manufacturing-factory-sqlstorage:5432"
+      FACTORY_SERIAL: "testfactoryserial01"
+      FACTORY_NAME: "testfactoryname01"
+      CERT_STORE_PASSWORD: "123456"
+      PLANT_MANAGER_SERVICE_URL: "http://datacenter.local:5200"
+#      DO_RESET: "true"
+
+  manufacturing-factory-productline-service:
+    image: quay.io/qiotmanufacturing/factory-product-line:1.0.0-beta1-aarch64
+    container_name: "manufacturing-factory-productline-service"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenterconnect
+      - demo-manufacturing-factory
+      - demo-manufacturing-factoryconnect
+    expose:
+      - "8080"
+    ports:
+      - "5101:8080"
+    volumes:
+      - demo-factory-shared-storage:/var/data/qiot
+    environment:
+      QUARKUS_PROFILE: "staging"
+#      LOG_LEVEL: "DEBUG"
+#      QIOT_LOG_LEVEL: "DEBUG"
+      ENABLE_SSL: "false"
+      INSECURE_HTTP_STATUS: "enabled"
+      MONGODB_URL: "mongodb://manufacturing-factory-nosqlstorage:27017"
+      MONGODB_DATABASE: "qiot_manufacturing"
+      MONGODB_USER: "qiotmanufacturing"
+      MONGODB_PASSWORD: "qiotmanufacturingpassword"
+      BROKER_URL: "manufacturing-factory-broker:61616"
+      KAFKA_BOOTSTRAP_URL: "datacenter.local:9092"
+
+  manufacturing-factory-validator-service:
+    image: quay.io/qiotmanufacturing/factory-production-validator:1.0.0-beta1-aarch64
+    container_name: "manufacturing-factory-validator-service"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenterconnect
+      - demo-manufacturing-factory
+      - demo-manufacturing-factoryconnect
+    volumes:
+      - demo-factory-shared-storage:/var/data/qiot
+    environment:
+      QUARKUS_PROFILE: "staging"
+#      LOG_LEVEL: "DEBUG"
+#      QIOT_LOG_LEVEL: "DEBUG"
+      ENABLE_SSL: "false"
+      MONGODB_URL: "mongodb://manufacturing-factory-nosqlstorage:27017"
+      MONGODB_DATABASE: "qiot_manufacturing"
+      MONGODB_USER: "qiotmanufacturing"
+      MONGODB_PASSWORD: "qiotmanufacturingpassword"
+      BROKER_URL: "manufacturing-factory-broker:61616"
+      KAFKA_BOOTSTRAP_URL: "datacenter.local:9092"
+      FACTORY_PRODUCTLINE_SERVICE_URL: "http://manufacturing-factory-productline-service:8080"
+      FACTORY_FACILITY_MANAGER_SERVICE_URL: "http://manufacturing-factory-facility-manager-service:8080"
+      
+volumes:
+  demo-factory-shared-storage:
+  demo-factory-postgres-storage:
+  demo-factory-mongo-storage:
+networks:
+  demo-manufacturing-datacenterconnect:
+    driver: bridge
+  demo-manufacturing-factory:
+    driver: bridge
+  demo-manufacturing-factoryconnect:
+    driver: bridge
+
+

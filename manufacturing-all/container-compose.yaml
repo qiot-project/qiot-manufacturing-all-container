@@ -157,6 +157,7 @@ services:
 #      LOG_LEVEL: "DEBUG"
 #      QIOT_LOG_LEVEL: "DEBUG"
       ENABLE_SSL: "false"
+      GENERATE_RANDOM_PRODUCTLINE: "true"
       INSECURE_HTTP_STATUS: "enabled"
       MONGODB_URL: "mongodb://manufacturing-datacenter-nosqlstorage:27017"
       MONGODB_DATABASE: "qiot_manufacturing"

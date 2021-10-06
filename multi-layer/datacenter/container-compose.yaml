@@ -1,0 +1,170 @@
+version: '3'
+services:
+
+  manufacturing-datacenter-kafka:
+    image: obsidiandynamics/kafka
+    container_name: "manufacturing-datacenter-kafka"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenter
+      - demo-manufacturing-datacenterconnect
+    expose:
+      - 2181
+      - 9092
+    ports:
+      - "2181:2181"
+      - "9092:9092"
+    environment:
+      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://manufacturing-datacenter-kafka:29092,EXTERNAL://manufacturing-datacenter-kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT: "6000"
+      KAFKA_RESTART_ATTEMPTS: "10"
+      KAFKA_RESTART_DELAY: "5"
+      ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: "0"
+
+  manufacturing-datacenter-sqlstorage:
+    image: postgres
+    container_name: "manufacturing-datacenter-sqlstorage"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenter
+    expose:
+      - "5432"
+    volumes:
+      - demo-datacenter-postgres-storage:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "qiotmanufacturing"
+      POSTGRES_PASSWORD: "qiotmanufacturingpassword"
+      POSTGRES_DB: "qiot_manufacturing"
+      
+  manufacturing-datacenter-nosqlstorage:
+    image: mongo
+    container_name: "manufacturing-datacenter-nosqlstorage"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenter
+    expose:
+      - "27017"
+    environment:
+      MONGO_INITDB_DATABASE: "qiot_manufacturing"
+      #MONGO_INITDB_ROOT_USERNAME: "qiotmanufacturing"
+      #MONGO_INITDB_ROOT_PASSWORD: "qiotmanufacturingpassword"
+      MONGO_INITDB_ROOT_USERNAME: "qiotroot"
+      MONGO_INITDB_ROOT_PASSWORD: "qiotrootpassword"
+    volumes:
+      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - demo-datacenter-mongo-storage:/data/db
+      
+  manufacturing-datacenter-influxdb:
+    image: "influxdb:latest"
+    container_name: "manufacturing-datacenter-influxdb"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenter
+    expose:
+      - "8086"
+      - "9999"
+    volumes:
+      - demo-datacenter-influxdb-user-storage:/root/.influxdbv2
+      - demo-datacenter-influxdb-data-storage:/var/lib/influxdb2
+      - demo-datacenter-influxdb-config-storage:/etc/influxdb2
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: "setup"
+      DOCKER_INFLUXDB_INIT_USERNAME: "qiotmanufacturing"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "qiotmanufacturingpassword"
+      DOCKER_INFLUXDB_INIT_ORG: "qiot"
+      DOCKER_INFLUXDB_INIT_BUCKET: "manufacturing"
+#     DOCKER_INFLUXDB_INIT_RETENTION: The duration the system's initial bucket should retain data. If not set, the initial bucket will retain data forever
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "qiotmanufacturinginfluxdbtoken"
+          
+  manufacturing-datacenter-registration-service:
+    image: quay.io/qiotmanufacturing/datacenter-registration:1.0.0-beta1
+    container_name: "manufacturing-datacenter-registration-service"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenter
+    expose:
+      - "8080"
+    environment:
+      QUARKUS_PROFILE: "staging"
+#      LOG_LEVEL: "DEBUG"
+#      QIOT_LOG_LEVEL: "DEBUG"
+      CERT_MANAGER_ENABLED: "false"
+
+  manufacturing-datacenter-plant-manager-service:
+    image: quay.io/qiotmanufacturing/datacenter-plant-manager:1.0.0-beta1
+    container_name: "manufacturing-datacenter-plant-manager-service"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenter
+      - demo-manufacturing-datacenterconnect
+    expose:
+      - "8080"
+      - "8443"
+    ports:
+      - "5200:8080"
+      - "5243:8443"
+    environment:
+      QUARKUS_PROFILE: "staging"
+#      LOG_LEVEL: "DEBUG"
+#      QIOT_LOG_LEVEL: "DEBUG"
+      ENABLE_SSL: "false"
+      INSECURE_HTTP_STATUS: "enabled"
+      DB_URL: "manufacturing-datacenter-sqlstorage:5432"
+      REGISTRATION_SERVICE_URL: "http://manufacturing-datacenter-registration-service:8080"
+
+  manufacturing-datacenter-productline-service:
+    image: quay.io/qiotmanufacturing/datacenter-product-line:1.0.0-beta1
+    container_name: "manufacturing-datacenter-productline-service"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenter
+      - demo-manufacturing-datacenterconnect
+    ports:
+      - "5201:8080"
+    environment:
+      QUARKUS_PROFILE: "staging"
+#      LOG_LEVEL: "DEBUG"
+#      QIOT_LOG_LEVEL: "DEBUG"
+      ENABLE_SSL: "false"
+      GENERATE_RANDOM_PRODUCTLINE: "true"
+      INSECURE_HTTP_STATUS: "enabled"
+      MONGODB_URL: "mongodb://manufacturing-datacenter-nosqlstorage:27017"
+      MONGODB_DATABASE: "qiot_manufacturing"
+      MONGODB_USER: "qiotmanufacturing"
+      MONGODB_PASSWORD: "qiotmanufacturingpassword"
+      KAFKA_BOOTSTRAP_URL: "manufacturing-datacenter-kafka:9092"
+
+  manufacturing-datacenter-eventcollector-service:
+    image: quay.io/qiotmanufacturing/datacenter-event-collector-jvm:1.0.0-beta1
+    container_name: "manufacturing-datacenter-eventcollector-service"
+    restart: "always"
+    networks:
+      - demo-manufacturing-datacenter
+    environment:
+      QUARKUS_PROFILE: "staging"
+#      LOG_LEVEL: "DEBUG"
+#      QIOT_LOG_LEVEL: "DEBUG"
+      ENABLE_SSL: "false"
+      INSECURE_HTTP_STATUS: "enabled"
+      KAFKA_BOOTSTRAP_URL: "manufacturing-datacenter-kafka:9092"
+      INFLUXDB_CONNECTION_URL: "http://manufacturing-datacenter-influxdb:8086"
+      INFLUXDB_ORG_ID: "qiot"
+      INFLUXDB_DATA_BUCKET_ID: "manufacturing"
+      INFLUXDB_TOKEN: "qiotmanufacturinginfluxdbtoken"
+
+      
+volumes:
+  demo-datacenter-postgres-storage:
+  demo-datacenter-mongo-storage:
+  demo-datacenter-influxdb-user-storage:
+  demo-datacenter-influxdb-data-storage:
+  demo-datacenter-influxdb-config-storage:
+networks:
+  demo-manufacturing-datacenter:
+    driver: bridge
+  demo-manufacturing-datacenterconnect:
+    driver: bridge
+
