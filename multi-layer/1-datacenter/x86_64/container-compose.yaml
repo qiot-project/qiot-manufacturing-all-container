@@ -50,6 +50,8 @@ services:
       - demo-manufacturing-datacenter
     expose:
       - "27017"
+    ports:
+      - "27017:27017"
     environment:
       MONGO_INITDB_DATABASE: "qiot_manufacturing"
       #MONGO_INITDB_ROOT_USERNAME: "qiotmanufacturing"
@@ -83,7 +85,7 @@ services:
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "qiotmanufacturinginfluxdbtoken"
           
   manufacturing-datacenter-registration-service:
-    image: quay.io/qiotmanufacturing/datacenter-registration:1.0.0-beta1
+    image: quay.io/qiotproject/all-registration:1.0.0-SNAPSHOT
     container_name: "manufacturing-datacenter-registration-service"
     restart: "always"
     networks:
@@ -97,7 +99,7 @@ services:
       CERT_MANAGER_ENABLED: "false"
 
   manufacturing-datacenter-plant-manager-service:
-    image: quay.io/qiotmanufacturing/datacenter-plant-manager:1.0.0-beta1
+    image: quay.io/qiotmanufacturing/datacenter-plant-manager:1.0.0.beta1-SNAPSHOT
     container_name: "manufacturing-datacenter-plant-manager-service"
     restart: "always"
     networks:
@@ -109,6 +111,9 @@ services:
     ports:
       - "5200:8080"
       - "5243:8443"
+    depends_on:
+      - "manufacturing-datacenter-sqlstorage"
+      - "manufacturing-datacenter-registration-service"
     environment:
       QUARKUS_PROFILE: "staging"
 #      LOG_LEVEL: "DEBUG"
@@ -119,7 +124,7 @@ services:
       REGISTRATION_SERVICE_URL: "http://manufacturing-datacenter-registration-service:8080"
 
   manufacturing-datacenter-productline-service:
-    image: quay.io/qiotmanufacturing/datacenter-product-line:1.0.0-beta1
+    image: quay.io/qiotmanufacturing/datacenter-product-line:1.0.0.beta1-SNAPSHOT
     container_name: "manufacturing-datacenter-productline-service"
     restart: "always"
     networks:
@@ -127,6 +132,9 @@ services:
       - demo-manufacturing-datacenterconnect
     ports:
       - "5201:8080"
+    depends_on:
+      - "manufacturing-datacenter-nosqlstorage"
+      - "manufacturing-datacenter-kafka"
     environment:
       QUARKUS_PROFILE: "staging"
 #      LOG_LEVEL: "DEBUG"
@@ -141,11 +149,14 @@ services:
       KAFKA_BOOTSTRAP_URL: "manufacturing-datacenter-kafka:9092"
 
   manufacturing-datacenter-eventcollector-service:
-    image: quay.io/qiotmanufacturing/datacenter-event-collector-jvm:1.0.0-beta1
+    image: quay.io/qiotmanufacturing/datacenter-event-collector-jvm:1.0.0.beta1-SNAPSHOT
     container_name: "manufacturing-datacenter-eventcollector-service"
     restart: "always"
     networks:
       - demo-manufacturing-datacenter
+    depends_on:
+      - "manufacturing-datacenter-influxdb"
+      - "manufacturing-datacenter-kafka"
     environment:
       QUARKUS_PROFILE: "staging"
 #      LOG_LEVEL: "DEBUG"

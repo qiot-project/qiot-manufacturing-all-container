@@ -1,0 +1,149 @@
+version: '3'
+services:
+
+#################### DATACENTER ####################
+
+  manufacturing-datacenter-sqlstorage:
+    image: postgres
+    container_name: "manufacturing-datacenter-sqlstorage"
+    restart: "always"
+    networks:
+      - manufacturing-datacenter
+    expose:
+      - "5432"
+    ports:
+      - "5433:5432"
+    volumes:
+      - datacenter-postgres-storage:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "qiotmanufacturing"
+      POSTGRES_PASSWORD: "qiotmanufacturingpassword"
+      POSTGRES_DB: "qiot_manufacturing"
+      
+  manufacturing-datacenter-nosqlstorage:
+    image: mongo
+    container_name: "manufacturing-datacenter-nosqlstorage"
+    restart: "always"
+    networks:
+      - manufacturing-datacenter
+    expose:
+      - "27017"
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_DATABASE: "qiot_manufacturing"
+      #MONGO_INITDB_ROOT_USERNAME: "qiotmanufacturing"
+      #MONGO_INITDB_ROOT_PASSWORD: "qiotmanufacturingpassword"
+      MONGO_INITDB_ROOT_USERNAME: "qiotroot"
+      MONGO_INITDB_ROOT_PASSWORD: "qiotrootpassword"
+    volumes:
+      - ./bootstrap/datacenter/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - datacenter-mongo-storage:/data/db
+      
+  manufacturing-datacenter-influxdb:
+    image: "influxdb:latest"
+    container_name: "manufacturing-datacenter-influxdb"
+    restart: "always"
+    networks:
+      - manufacturing-datacenter
+    expose:
+      - "8086"
+      - "9999"
+    ports:
+      - "8086:8086"
+      - "9999:9999"
+    volumes:
+      - datacenter-influxdb-user-storage:/root/.influxdbv2
+      - datacenter-influxdb-data-storage:/var/lib/influxdb2
+      - datacenter-influxdb-config-storage:/etc/influxdb2
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: "setup"
+      DOCKER_INFLUXDB_INIT_USERNAME: "qiotmanufacturing"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "qiotmanufacturingpassword"
+      DOCKER_INFLUXDB_INIT_ORG: "qiot"
+      DOCKER_INFLUXDB_INIT_BUCKET: "manufacturing"
+#     DOCKER_INFLUXDB_INIT_RETENTION: The duration the system's initial bucket should retain data. If not set, the initial bucket will retain data forever
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "qiotmanufacturinginfluxdbtoken"
+
+#################### FACTORY ####################
+
+  manufacturing-factory-broker:
+    image: vromero/activemq-artemis:latest-alpine
+    container_name: "manufacturing-factory-broker"
+    restart: "always"
+    networks:
+      - manufacturing-factory
+      - manufacturing-factoryconnect
+    ports:
+    - "61616:61616"
+    - "1883:1883"
+    - "5672:5672"
+    - "8161:8161"
+    environment:
+      ARTEMIS_USERNAME: "qiotmanufacturing"
+      ARTEMIS_PASSWORD: "qiotmanufacturingpassword"
+
+  manufacturing-factory-sqlstorage:
+    image: postgres
+    container_name: "manufacturing-factory-sqlstorage"
+    restart: always
+    networks:
+      - manufacturing-factory
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    volumes:
+      - factory-postgres-storage:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "qiotmanufacturing"
+      POSTGRES_PASSWORD: "qiotmanufacturingpassword"
+      POSTGRES_DB: "qiot_manufacturing"
+      
+  manufacturing-factory-nosqlstorage:
+    image: mongo
+    container_name: "manufacturing-factory-nosqlstorage"
+    restart: "always"
+    networks:
+      - manufacturing-factory
+    expose:
+      - "27017"
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./bootstrap/factory/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - factory-mongo-storage:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: "qiot_manufacturing"
+      #MONGO_INITDB_ROOT_USERNAME: "qiotmanufacturing"
+      #MONGO_INITDB_ROOT_PASSWORD: "qiotmanufacturingpassword"
+      MONGO_INITDB_ROOT_USERNAME: "qiotroot"
+      MONGO_INITDB_ROOT_PASSWORD: "qiotrootpassword"          
+
+#################### VOLUMES ####################
+
+volumes:
+  datacenter-postgres-storage:
+  datacenter-mongo-storage:
+  datacenter-influxdb-user-storage:
+  datacenter-influxdb-data-storage:
+  datacenter-influxdb-config-storage:
+  datacenter-grafana-storage:
+  factory-shared-storage:
+  factory-postgres-storage:
+  factory-mongo-storage:
+  edge-machinery-storage:
+
+#################### NETWORKS ####################
+  
+networks:
+  manufacturing-datacenter:
+    external: true
+  manufacturing-datacenterconnect:
+    external: true
+  manufacturing-factory:
+    external: true
+  manufacturing-factoryconnect:
+    external: true
+  manufacturing-edge:
+    external: true
